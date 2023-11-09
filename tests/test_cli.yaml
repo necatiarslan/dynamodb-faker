@@ -1,0 +1,36 @@
+version: 1
+config:
+  locale: en_US
+tables:
+  - table_name: person
+    row_count: 10
+    columns:
+      - column_name: id
+        data: row_id
+      - column_name: first_name
+        data: fake.first_name()
+      - column_name: last_name
+        data: fake.last_name()
+      - column_name: age
+        data: fake.random_int(18, 90)
+      - column_name: street_address
+        data: fake.street_address()
+      - column_name: city
+        data: fake.city()
+      - column_name: state_abbr
+        data: fake.state_abbr()
+      - column_name: postcode
+        data: fake.postcode()
+      - column_name: gender
+        data: random.choice(["male", "female"])
+        null_percentage: 0.3
+      - column_name: left_handed
+        data: fake.pybool()
+      - column_name: salary
+        data: None #NULL
+      - column_name: height
+        data: "\"170 cm\"" #string
+      - column_name: weight
+        data: 150 #number
+         
+
