@@ -20,34 +20,34 @@ class Config:
             raise Exception(f"{self.file_path} file not found")
     
     def validate_config(self):
-        if "tables" not in self.config:
-            raise Exception(f"Config file should have tables node")
+        if "dynamodb_table" not in self.config:
+            raise Exception(f"Config file should have dynamodb_table node")
         
-        if len(self.config["tables"]) == 0:
-            raise Exception(f"Config file should contain at least 1 table")
+        dynamodb_table = self.config["dynamodb_table"]
+        if "table_name" not in dynamodb_table:
+            raise Exception(f"Table should have a table_name node")
         
-        for table in self.config["tables"]:
-            if "table_name" not in table:
-                raise Exception(f"Table should have a table_name attribute")
-            
-            table_name = table["table_name"]
+        table_name = dynamodb_table["table_name"]
 
-            if "row_count" not in table:
-                raise Exception(f"{table_name} table should have a row_count attribute")
+        if "row_count" not in dynamodb_table:
+            raise Exception(f"{table_name} table should have a row_count node")
 
-            if "columns" not in table:
-                raise Exception(f"{table_name} table should have a columns attribute")
+        if "attributes" not in dynamodb_table:
+            raise Exception(f"{table_name} table should have a attributes node")
 
-            if len(table["columns"]) == 0:
-                raise Exception(f"{table_name} table should have at least 1 table")
+        if len(dynamodb_table["attributes"]) == 0:
+            raise Exception(f"{table_name} table should have at least 1 attribute")
+        
+        for attribute in dynamodb_table["attributes"]:
+            if "name" not in attribute:
+                raise Exception(f"{table_name} table have an attribute without a name")
+        
+            attr_name = attribute["name"]
             
-            for column in table["columns"]:
-                if "column_name" not in column:
-                    raise Exception(f"{table_name} table have a column without a column_name attribute")
+            if "type" not in attribute:
+                raise Exception(f"{table_name} table {attr_name} attribute do not have a type node")
             
-                column_name = column["column_name"]
-                
-                if "data" not in column:
-                    raise Exception(f"{table_name} table {column_name} column do not have a data attribute")
+            if attribute["type"] != "NULL" and "data" not in attribute:
+                raise Exception(f"{table_name} table {attr_name} {attribute['type']} attribute do not have a data node")
         
         util.log(f"config file is validated")

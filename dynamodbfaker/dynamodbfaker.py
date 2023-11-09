@@ -1,35 +1,26 @@
 from . import config
 from . import util
-import pandas as pd
 from faker import Faker
 import random
+import json
 from os import path
+import datetime
 
-def to_target(file_type, config_file_path, target_file_path, table_name=None, **kwargs) -> {} :
-    if file_type not in ["csv", "json", "excel", "parquet"]:
+def to_target(file_type, config_file_path, target_file_path, boto_session=None, **kwargs) -> {} :
+    if file_type not in ["json"]:
         raise Exception(f"Wrong file_type = {file_type}")
     
-    result = {}
-    df_dict = to_pandas(config_file_path, **kwargs)
+    json_data = to_json_data(config_file_path, boto_session=None, **kwargs)
     
     if path.isdir(target_file_path):
-        for key_table_name in df_dict.keys():
-            if table_name != None and key_table_name != table_name:
-                continue #skip other tables
-
-            df = df_dict[key_table_name]
-            temp_file_path = path.join(target_file_path, util.get_temp_filename(key_table_name) + get_file_extension(file_type))
-            call_export_function(df, file_type, temp_file_path)
+            temp_file_path = path.join(target_file_path, util.get_temp_filename() + get_file_extension(file_type))
+            call_export_function(json_data, temp_file_path)
             util.log(f"data is exported to {temp_file_path} as {file_type}")
-            result[key_table_name] = temp_file_path 
+            result = temp_file_path 
     else:
-        if table_name is None:
-            table_name = list(df_dict.keys())[0]
-        df = df_dict[table_name]
-        df.to_csv(target_file_path)
-        call_export_function(df, file_type, target_file_path)
+        call_export_function(json_data, target_file_path)
         util.log(f"data is exported to {target_file_path} as {file_type}")
-        result[table_name] = target_file_path
+        result = target_file_path
     
     return result
 
@@ -45,52 +36,24 @@ def get_file_extension(file_type):
     else:
         return ".txt"
 
-def call_export_function(data_frame: pd.DataFrame, file_type, target_file_path):
-    if file_type == "csv":
-        data_frame.to_csv(target_file_path, index=False)
-    elif file_type == "json":
-        data_frame.to_json(target_file_path, index=False, indent=4, orient='records', date_format='iso')
-    elif file_type == "excel":
-        data_frame.to_excel(target_file_path, index=False)
-    elif file_type == "parquet":
-        data_frame.to_parquet(target_file_path, index=False)
-    else:
-        raise Exception(f"Wrong file_type = {file_type}")
+def call_export_function(json_data, target_file_path):
+    with open(target_file_path, mode="w") as file:
+        json.dump(json_data, file, indent=4)
 
-def to_csv(config_file_path, target_file_path=None, table_name=None, **kwargs) -> {} :
+def to_json(config_file_path, target_file_path=None, boto_session=None, **kwargs) -> {} :
     if target_file_path is None:
         target_file_path = "."
-    return to_target("csv", config_file_path, target_file_path, table_name, **kwargs)
+    return to_target("json", config_file_path, target_file_path, boto_session, **kwargs)
 
-def to_json(config_file_path, target_file_path=None, table_name=None, **kwargs) -> {} :
-    if target_file_path is None:
-        target_file_path = "."
-    return to_target("json", config_file_path, target_file_path, table_name, **kwargs)
-
-def to_excel(config_file_path, target_file_path=None, table_name=None, **kwargs) -> {} :
-    if target_file_path is None:
-        target_file_path = "."
-    return to_target("excel", config_file_path, target_file_path, table_name, **kwargs)
-
-def to_parquet(config_file_path, target_file_path=None, table_name=None, **kwargs) -> {} :
-    if target_file_path is None:
-        target_file_path = "."
-    return to_target("parquet", config_file_path, target_file_path, table_name, **kwargs)
-
-def to_pandas(config_file_path:str, **kwargs) -> pd.DataFrame:
+def to_json_data(config_file_path:str, boto_session=None, **kwargs) -> {}:
     configurator = config.Config(config_file_path)
-    tables = configurator.config["tables"]
-    util.log(f"table count={len(tables)}")
 
-    result = {}
-    for table in tables:
-        df = generate_table(table, configurator, **kwargs)
-        result[table['table_name']] = df
+    df = generate_table(configurator, boto_session, **kwargs)
     
-    util.log(f"{len(result)} pandas dataframe(s) created")
-    return result
+    util.log(f"pandas dataframe created")
+    return df
 
-def generate_table(table, configurator, **kwargs) -> pd.DataFrame:
+def generate_table(configurator, boto_session=None, **kwargs) -> {}:
     locale = None
     if "config" in configurator.config and "locale" in configurator.config["config"]:
         locale = configurator.config["config"]["locale"]
@@ -104,22 +67,25 @@ def generate_table(table, configurator, **kwargs) -> pd.DataFrame:
             for provider in kwargs["fake_provider"]:
                 faker.add_provider(provider)
 
-    table_name = table['table_name']
-    row_count = table['row_count']
-    columns = table['columns']
+    table_name = configurator.config['dynamodb_table']["table_name"]
+    row_count = configurator.config['dynamodb_table']['row_count']
+    columns = configurator.config['dynamodb_table']["attributes"]
 
     table_data = {}
 
     for column in columns:
-        column_name = column['column_name']
-        data_command = column['data']
+        column_name = column['name']
+        column_type = column["type"]
+        if column_type == "NULL":
+            data_command = "NULL"
+        else:
+            data_command = column['data']
         fake_data = generate_fake_data(faker, data_command, row_count, column, **kwargs)
-        table_data[column_name] = fake_data
+        table_data[column_name] = { column_type : fake_data }
         #print(f"fake_data={fake_data}")
 
-    df = pd.DataFrame(table_data)
-    util.log(f"{table_name} pandas dataframe created")
-    return df
+    util.log(f"{table_name} fake data created")
+    return table_data
 
 def parse_null_percentge(null_percentage):
     if isinstance(null_percentage, str) and null_percentage[-1] == "%":
@@ -169,9 +135,15 @@ def generate_fake_data(fake: Faker, command, row_count, column_config, **kwargs)
             else:
                 func = kwargs["custom_function"]
                 variables[func.__name__] = func
-
-        exec(f"result = {command}", variables)
+        if command == "NULL":
+            result = "NULL"
+        else:
+            exec(f"result = {command}", variables)
         result = variables["result"]
+
+        if isinstance(result, (datetime.date, datetime.date)):
+            result = result.isoformat()
+
         fake_data.append(result)
 
     return fake_data

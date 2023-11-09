@@ -11,7 +11,7 @@ dynamodb_table:
   row_count: 10
   attributes:
     - name: id
-      type: N
+      type: "N"
       data: row_id
     - name: first_name
       type: S
@@ -20,7 +20,7 @@ dynamodb_table:
       type: S
       data: fake.last_name()
     - name: age
-      type: N
+      type: "N"
       data: fake.random_int(18, 90)
     - name: dob
       type: S
@@ -45,4 +45,4 @@ dynamodb_table:
       type: BOOL
       data: fake.pybool()
     - name: height
-      type: NULL
+      type: "NULL"
