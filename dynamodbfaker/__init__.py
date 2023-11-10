@@ -1,1 +1,1 @@
-from .dynamodbfaker import to_json, to_json_data, to_target
+from .dynamodbfaker import to_json, get_item_list, to_target

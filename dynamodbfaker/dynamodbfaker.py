@@ -6,14 +6,16 @@ import json
 from os import path
 import datetime
 
-def to_target(file_type, config_file_path, target_file_path, boto_session=None, **kwargs) -> {} :
+def to_target(file_type, config_file_path, target_file_path, **kwargs) -> str :
     if file_type not in ["json"]:
         raise Exception(f"Wrong file_type = {file_type}")
     
-    json_data = to_json_data(config_file_path, boto_session=None, **kwargs)
+    item_list = get_item_list(config_file_path, **kwargs)
     
+    json_data = { "Items" : item_list, "Count" : len(item_list)}
+
     if path.isdir(target_file_path):
-            temp_file_path = path.join(target_file_path, util.get_temp_filename() + get_file_extension(file_type))
+            temp_file_path = path.join(target_file_path, util.get_temp_filename() + util.get_file_extension(file_type))
             call_export_function(json_data, temp_file_path)
             util.log(f"data is exported to {temp_file_path} as {file_type}")
             result = temp_file_path 
@@ -24,39 +26,21 @@ def to_target(file_type, config_file_path, target_file_path, boto_session=None, 
     
     return result
 
-def get_file_extension(file_type):
-    if file_type == "csv":
-        return ".csv"
-    elif file_type == "json":
-        return ".json"
-    elif file_type == "parquet":
-        return ".parquet"
-    elif file_type == "excel":
-        return ".xlsx"
-    else:
-        return ".txt"
-
 def call_export_function(json_data, target_file_path):
     with open(target_file_path, mode="w") as file:
         json.dump(json_data, file, indent=4)
 
-def to_json(config_file_path, target_file_path=None, boto_session=None, **kwargs) -> {} :
+def to_json(config_file_path, target_file_path=None, **kwargs) -> str :
     if target_file_path is None:
         target_file_path = "."
-    return to_target("json", config_file_path, target_file_path, boto_session, **kwargs)
+    return to_target("json", config_file_path, target_file_path, **kwargs)
 
-def to_json_data(config_file_path:str, boto_session=None, **kwargs) -> {}:
+def get_item_list(config_file_path:str, **kwargs) -> []:
     configurator = config.Config(config_file_path)
 
-    df = generate_table(configurator, boto_session, **kwargs)
-    
-    util.log(f"pandas dataframe created")
-    return df
-
-def generate_table(configurator, boto_session=None, **kwargs) -> {}:
     locale = None
     if "config" in configurator.config and "locale" in configurator.config["config"]:
-        locale = configurator.config["config"]["locale"]
+        locale = configurator.get_locale()
 
     faker = Faker(locale)
 
@@ -67,48 +51,50 @@ def generate_table(configurator, boto_session=None, **kwargs) -> {}:
             for provider in kwargs["fake_provider"]:
                 faker.add_provider(provider)
 
-    table_name = configurator.config['dynamodb_table']["table_name"]
-    row_count = configurator.config['dynamodb_table']['row_count']
-    columns = configurator.config['dynamodb_table']["attributes"]
+    table_name = configurator.get_table()
+    row_count = configurator.get_rowcount()
+    attribute_list = configurator.get_attributes()
 
-    table_data = {}
-
-    for column in columns:
-        column_name = column['name']
-        column_type = column["type"]
-        if column_type == "NULL":
+    json_data = {}
+    iteration = 1
+    for attr in attribute_list:
+        attr_name = attr["name"]
+        attr_type = attr["type"]
+        if attr_type == "NULL":
             data_command = "NULL"
         else:
-            data_command = column['data']
-        fake_data = generate_fake_data(faker, data_command, row_count, column, **kwargs)
-        table_data[column_name] = { column_type : fake_data }
-        #print(f"fake_data={fake_data}")
+            data_command = attr['data']
+
+        util.progress_bar(iteration, len(attribute_list), f"Generating {attr_name}")
+
+        fake_data = generate_fake_value_list(faker, data_command, row_count, attr, **kwargs)
+        json_data[attr_name] = fake_data
+
+        iteration += 1
+
+    items = []
+    iteration = 1
+    for row in range(row_count):
+        util.progress_bar(iteration, row_count, "Shaping JSON")
+        item = {}
+        for attr in attribute_list:
+            attr_name = attr["name"]
+            attr_type = attr["type"]
+            item[attr_name] = { attr_type : json_data[attr_name][row] }
+        items.append(item)
+
+        iteration += 1
 
     util.log(f"{table_name} fake data created")
-    return table_data
+    return items
 
-def parse_null_percentge(null_percentage):
-    if isinstance(null_percentage, str) and null_percentage[-1] == "%":
-        null_percentage = float(null_percentage[0:-1])
-    
-    if isinstance(null_percentage, str) and null_percentage[0] == "%":
-        null_percentage = float(null_percentage[1:])
-
-    if isinstance(null_percentage, int) or isinstance(null_percentage, float):
-        if null_percentage >= 0 and null_percentage <= 1:
-            return float(null_percentage)
-        elif null_percentage >= 0 and null_percentage<= 100:
-            return float(null_percentage / 100)
-
-    return float(0)
-
-def generate_fake_data(fake: Faker, command, row_count, column_config, **kwargs) -> []:
+def generate_fake_value_list(fake: Faker, command, row_count, attribute_config, **kwargs) -> []:
     result = None
     
     null_percentge = 0
     null_indexies = []
-    if "null_percentage" in column_config:
-        null_percentge = parse_null_percentge(column_config["null_percentage"])
+    if "null_percentage" in attribute_config:
+        null_percentge = util.parse_null_percentge(attribute_config["null_percentage"])
         for _ in range(1, int(row_count * null_percentge)+1):
             random_num = random.randint(1, row_count)
             null_indexies.append(random_num)

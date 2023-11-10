@@ -8,7 +8,7 @@ aws:
   credentials_profile: default #default the profile name in your local .aws/config file
 dynamodb_table:
   table_name: person
-  row_count: 10
+  row_count: 10000
   attributes:
     - name: id
       type: "N"

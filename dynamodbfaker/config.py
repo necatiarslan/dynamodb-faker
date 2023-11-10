@@ -47,7 +47,27 @@ class Config:
             if "type" not in attribute:
                 raise Exception(f"{table_name} table {attr_name} attribute do not have a type node")
             
-            if attribute["type"] != "NULL" and "data" not in attribute:
+            type = attribute["type"]
+
+            if type not in Config.get_supported_data_types():
+                raise Exception(f"{table_name} table {attr_name} attribute type {type} is not supported yet :-() use {Config.get_supported_data_types()}")
+
+            if type != "NULL" and "data" not in attribute:
                 raise Exception(f"{table_name} table {attr_name} {attribute['type']} attribute do not have a data node")
         
         util.log(f"config file is validated")
+
+    def get_supported_data_types():
+        return ["S", "N", "BOOL", "NULL"]
+
+    def get_locale(self):
+        return self.config["config"]["locale"]
+
+    def get_table(self):
+        return self.config['dynamodb_table']["table_name"]
+
+    def get_rowcount(self):
+        return self.config['dynamodb_table']['row_count']
+    
+    def get_attributes(self):
+        return self.config['dynamodb_table']["attributes"]
