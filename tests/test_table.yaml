@@ -1,14 +1,15 @@
 version: 1
 config:
-  locale: en_US #faker locale
-  on_update_item_error: RAISE_ERROR #RAISE_ERROR, SKIP
-  if_item_exists: OVERWRITE #OVERWRITE, SKIP
+  locale: en_US #faker locale Default:en_US
+  on_update_item_error: RAISE_ERROR #RAISE_ERROR, SKIP Default:RAISE_ERROR
+  if_item_exists: OVERWRITE #OVERWRITE, SKIP Default:OVERWRITE
+  empty_table_first: False #True/False Default:False
 aws:
   region: us-east-1
-  credentials_profile: default #default the profile name in your local .aws/config file
+  credentials_profile: default #the profile name in your local .aws/config file Default:default
 dynamodb_table:
   table_name: person
-  row_count: 10000
+  row_count: 10
   attributes:
     - name: id
       type: "N"

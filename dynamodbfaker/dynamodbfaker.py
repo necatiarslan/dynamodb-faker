@@ -80,7 +80,13 @@ def get_item_list(config_file_path:str, **kwargs) -> []:
         for attr in attribute_list:
             attr_name = attr["name"]
             attr_type = attr["type"]
-            item[attr_name] = { attr_type : json_data[attr_name][row] }
+            attr_data = json_data[attr_name][row]
+            
+            if attr_data is None:
+                item[attr_name] = { "NULL" : True }
+            else:
+                item[attr_name] = { attr_type : attr_data }
+
         items.append(item)
 
         iteration += 1

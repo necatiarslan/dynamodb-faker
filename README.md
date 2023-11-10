@@ -1,18 +1,13 @@
-# Table Faker
-dynamodbfaker is a versatile Python package that empowers you to effortlessly create realistic but synthetic table data for a wide range of applications. If you need to generate test data for software development, this tool simplifies the process with an intuitive schema definition in YAML format.
+# Dynamodb Faker
+dynamodbfaker is a versatile Python package that empowers you to effortlessly create realistic but synthetic dynamodb data for a wide range of applications. If you need to generate test data for software development, this tool simplifies the process with an intuitive schema definition in YAML format.
 
 ### Key Features
-**Schema Definition:** Define your target schema using a simple YAML file. Specify the structure of your tables, column names, fake data generation code, and relationships. You can define multiple tables in a yaml file.
+**Schema Definition:** Define your target schema using a simple YAML file. Specify the structure of your table, attribute names and fake data generation code.
 
 **Faker and Randomization:** Leverage the power of the Faker library and random data generation to create authentic-looking fake data that mimics real-world scenarios.
 
-**Multiple Output Formats:** Generate fake data in various formats to suit your needs
-
-- Pandas Dataframe
-- CSV File
-- Parquet File
-- JSON File
-- Excel File
+**Insert to Your Dynamodb Table:**
+Insert generated data directly to your dynamodb table. 
 
 ### Installation
 ```bash 
@@ -23,39 +18,53 @@ pip install dynamodbfaker
 ```
 version: 1
 config:
-  locale: en_US
-tables:
-  - table_name: person
-    row_count: 10
-    columns:
-      - column_name: id
-        data: row_id
-      - column_name: first_name
-        data: fake.first_name()
-      - column_name: last_name
-        data: fake.last_name()
-      - column_name: age
-        data: fake.random_int(18, 90)
-      - column_name: dob
-        data: fake.date_of_birth()
-        null_percentage: 0.20
-      - column_name: salary
-        data: None                # NULL
-      - column_name: height
-        data: "\"170 cm\""        # string
-      - column_name: weight
-        data: 150                 # number
-  - table_name: employee
-    row_count: 5
-    columns:
-      - column_name: id
-        data: row_id
-      - column_name: person_id
-        data: fake.random_int(1, 10)
-      - column_name: hire_date
-        data: fake.date_between()
-      - column_name: school
-        data: fake.school_name()  # custom provider
+  locale: en_US                       #faker locale Default:en_US
+  on_update_item_error: RAISE_ERROR   #RAISE_ERROR, SKIP Default:RAISE_ERROR
+  if_item_exists: OVERWRITE           #OVERWRITE, SKIP Default:OVERWRITE
+  empty_table_first: False            #True/False Default:False
+aws:
+  region: us-east-1
+  credentials_profile: default        #the profile name in your local .aws/config file Default:default
+dynamodb_table:
+  table_name: person
+  row_count: 10000
+  attributes:
+    - name: id
+      type: "N"
+      data: row_id
+    - name: first_name
+      type: S
+      data: fake.first_name()
+    - name: last_name
+      type: S
+      data: fake.last_name()
+    - name: age
+      type: "N"
+      data: fake.random_int(18, 90)
+    - name: dob
+      type: S
+      data: fake.date_of_birth()
+    - name: street_address
+      type: S
+      data: fake.street_address()
+    - name: city
+      type: S
+      data: fake.city()
+    - name: state_abbr
+      type: S
+      data: fake.state_abbr()
+    - name: postcode
+      type: S
+      data: fake.postcode()
+    - name: gender
+      type: S
+      data: random.choice(["male", "female"])
+      null_percentage: 0.3
+    - name: left_handed
+      type: BOOL
+      data: fake.pybool()
+    - name: height
+      type: "NULL"
 ```
 [full yml example](tests/test_table.yaml)
 
@@ -63,22 +72,13 @@ tables:
 ```python
 import dynamodbfaker
 
-# exports to current folder in csv format
-dynamodbfaker.to_csv("test_table.yaml")
-
-# exports all tables in json format
+# export in json format
 dynamodbfaker.to_json("test_table.yaml", "./target_folder")
-
-# exports all tables in parquet format
-dynamodbfaker.to_parquet("test_table.yaml", "./target_folder")
-
-# exports only the first table in excel format
-dynamodbfaker.to_excel("test_table.yaml", "./target_folder/target_file.xlsx")
 
 # you can use customer faker provider
 from faker_education import SchoolProvider
 
-dynamodbfaker.to_csv("test_table.yaml", "./target_folder", fake_provider=SchoolProvider)
+dynamodbfaker.to_json("test_table.yaml", "./target_folder", fake_provider=SchoolProvider)
 # multiple custom provider in list also works
 ```
 
@@ -86,31 +86,103 @@ dynamodbfaker.to_csv("test_table.yaml", "./target_folder", fake_provider=SchoolP
 You can use dynamodbfaker in your terminal for adhoc needs or shell script to automate fake data generation. \
 Faker custom providers and custom functions are not supported in CLI.
 ```bash
-# exports to current folder in csv format
+# exports to current folder in json format
 dynamodbfaker --config test_table.yaml
 
-# exports to current folder in excel format
-dynamodbfaker --config test_table.yaml --file_type excel
+# exports to target folder in json format
+dynamodbfaker --config test_table.yaml --target ./target_folder 
 
-# exports all tables in json format
-dynamodbfaker --config test_table.yaml --file_type json --target ./target_folder 
-
-# exports only the first table
-dynamodbfaker --config test_table.yaml --file_type parquet --target ./target_folder/target_file.parquet
+# exports to target file in json format 
+dynamodbfaker --config test_table.yaml --target ./target_folder/target_file.json
 ```
 
-### Sample CSV Output
-```
-id,first_name,last_name,age,dob,salary,height,weight
-1,John,Smith,35,1992-01-11,,170 cm,150
-2,Charles,Shepherd,27,1987-01-02,,170 cm,150
-3,Troy,Johnson,42,,170 cm,150
-4,Joshua,Hill,86,1985-07-11,,170 cm,150
-5,Matthew,Johnson,31,1940-03-31,,170 cm,150
+### Sample JSON Output
+```json
+{
+    "Items": [
+        {
+            "id": {
+                "N": 1
+            },
+            "first_name": {
+                "S": "Connie"
+            },
+            "last_name": {
+                "S": "Skinner"
+            },
+            "age": {
+                "N": 89
+            },
+            "dob": {
+                "S": "1968-09-25"
+            },
+            "street_address": {
+                "S": "5939 Christopher Crescent Apt. 747"
+            },
+            "city": {
+                "S": "North Mistyside"
+            },
+            "state_abbr": {
+                "S": "HI"
+            },
+            "postcode": {
+                "S": "67235"
+            },
+            "gender": {
+                "S": "male"
+            },
+            "left_handed": {
+                "BOOL": true
+            },
+            "height": {
+                "NULL": null
+            }
+        },
+        {
+            "id": {
+                "N": 2
+            },
+            "first_name": {
+                "S": "Carla"
+            },
+            "last_name": {
+                "S": "Robles"
+            },
+            "age": {
+                "N": 54
+            },
+            "dob": {
+                "S": "1921-12-08"
+            },
+            "street_address": {
+                "S": "35264 Jones Squares"
+            },
+            "city": {
+                "S": "Michelleland"
+            },
+            "state_abbr": {
+                "S": "TX"
+            },
+            "postcode": {
+                "S": "94786"
+            },
+            "gender": {
+                "S": "female"
+            },
+            "left_handed": {
+                "BOOL": false
+            },
+            "height": {
+                "NULL": null
+            }
+        }
+    ],
+    "Count": 2
+}
 ```
 
 ### Custom Functions
-With Table Faker, you have the flexibility to provide your own custom functions to generate column data. This advanced feature empowers developers to create custom fake data generation logic that can pull data from a database, API, file, or any other source as needed. You can also supply multiple functions in a list, allowing for even more versatility. The custom function you provide should return a single value, giving you full control over your synthetic data generation.
+With Dynamodb Faker, you have the flexibility to provide your own custom functions to generate column data. This advanced feature empowers developers to create custom fake data generation logic that can pull data from a database, API, file, or any other source as needed. You can also supply multiple functions in a list, allowing for even more versatility. The custom function you provide should return a single value, giving you full control over your synthetic data generation.
 
 ```python
 from dynamodbfaker import dynamodbfaker
@@ -120,25 +192,37 @@ fake = Faker()
 def get_level():
     return f"level {fake.random_int(1, 5)}"
 
-dynamodbfaker.to_csv("test_table.yaml", "./target_folder", custom_function=get_level)
+dynamodbfaker.to_json("test_table.yaml", "./target_folder", custom_function=get_level)
 ```
 Add get_level function to your yaml file
 ```
 version: 1
 config:
-  locale: en_US
-tables:
-  - table_name: employee
-    row_count: 5
-    columns:
-      - column_name: id
-        data: row_id
-      - column_name: person_id
-        data: fake.random_int(1, 10)
-      - column_name: hire_date
-        data: fake.date_between()
-      - column_name: level
-        data: get_level() # custom function
+  locale: en_US #faker locale Default:en_US
+  on_update_item_error: RAISE_ERROR #RAISE_ERROR, SKIP Default:RAISE_ERROR
+  if_item_exists: OVERWRITE #OVERWRITE, SKIP Default:OVERWRITE
+  empty_table_first: False #True/False Default:False
+aws:
+  region: us-east-1
+  credentials_profile: default #the profile name in your local .aws/config file Default:default
+dynamodb_table:
+  table_name: person
+  row_count: 10000
+  attributes:
+    - name: id
+      type: "N"
+      data: row_id
+    - name: first_name
+      type: S
+      data: fake.first_name()
+    - name: last_name
+      type: S
+      data: fake.last_name()
+    - name: age
+      type: "N"
+      data: fake.random_int(18, 90)
+    - column_name: level
+      data: get_level() # custom function
 ```
 
 
@@ -150,17 +234,11 @@ https://github.com/necatiarslan/dynamodb-faker/issues/new
 
 
 ### TODO
-- Foreign key
-- Parquet Column Types
+- Save to dynamodb
 
 
 ### Nice To Have
-- Export To PostgreSQL
-- Inline schema definition
-- Json schema file
-- Pyarrow table
-- Use Logging package
-- Exception Management
+- 
 
 Follow me on linkedin to get latest news \
 https://www.linkedin.com/in/necati-arslan/
