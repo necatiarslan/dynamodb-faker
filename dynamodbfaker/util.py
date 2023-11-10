@@ -55,7 +55,7 @@ def progress_bar(iteration=1, lenght=1, suffix = "Complete"):
     percent = ("{0:.1f}").format(100 * (iteration / float(lenght)))
     filled_length = int(length * iteration // lenght)
     bar = fill * filled_length + '-' * (length - filled_length)
-    sys.stdout.write(f'\r{prefix} |{bar}| {iteration}/{lenght} | {percent}% {suffix}')
+    sys.stdout.write(f'\r{prefix} |{bar}| {iteration}/{lenght} | {percent}% {suffix}                    ')
     sys.stdout.flush()
 
     if iteration >= lenght:
