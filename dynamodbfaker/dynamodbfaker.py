@@ -59,11 +59,7 @@ def get_item_list(config_file_path:str, **kwargs) -> []:
     iteration = 1
     for attr in attribute_list:
         attr_name = attr["name"]
-        attr_type = attr["type"]
-        if attr_type == "NULL":
-            data_command = "NULL"
-        else:
-            data_command = attr['data']
+        data_command = attr['data']
 
         util.progress_bar(iteration, len(attribute_list), f"Generating {attr_name}")
 
@@ -79,10 +75,10 @@ def get_item_list(config_file_path:str, **kwargs) -> []:
         item = {}
         for attr in attribute_list:
             attr_name = attr["name"]
-            attr_type = attr["type"]
             attr_data = json_data[attr_name][row]
+            attr_type = get_attribute_type(attr_data, table_name, attr_name)
             
-            if attr_data is None:
+            if attr_type == "NULL":
                 item[attr_name] = { "NULL" : True }
             else:
                 item[attr_name] = { attr_type : attr_data }
@@ -93,6 +89,18 @@ def get_item_list(config_file_path:str, **kwargs) -> []:
 
     util.log(f"{table_name} fake data created")
     return items
+
+def get_attribute_type(data, table_name, attr_name):
+    if isinstance(data, str):
+        return "S"
+    elif isinstance(data, bool):
+        return "BOOL"
+    elif isinstance(data, int) or isinstance(data, float):
+        return "N"
+    elif data is None:
+        return "NULL"
+    else:
+        raise Exception(f"Attribute type can not be infered {table_name}/{attr_name}")
 
 def generate_fake_value_list(fake: Faker, command, row_count, attribute_config, **kwargs) -> []:
     result = None
@@ -127,13 +135,11 @@ def generate_fake_value_list(fake: Faker, command, row_count, attribute_config, 
             else:
                 func = kwargs["custom_function"]
                 variables[func.__name__] = func
-        if command == "NULL":
-            result = "NULL"
-        else:
-            exec(f"result = {command}", variables)
+        
+        exec(f"result = {command}", variables)
         result = variables["result"]
 
-        if isinstance(result, (datetime.date, datetime.date)):
+        if isinstance(result, (datetime.date, datetime.datetime)):
             result = result.isoformat()
 
         fake_data.append(result)

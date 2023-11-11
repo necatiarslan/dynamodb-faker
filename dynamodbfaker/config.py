@@ -43,16 +43,8 @@ class Config:
                 raise Exception(f"{table_name} table have an attribute without a name")
         
             attr_name = attribute["name"]
-            
-            if "type" not in attribute:
-                raise Exception(f"{table_name} table {attr_name} attribute do not have a type node")
-            
-            type = attribute["type"]
 
-            if type not in Config.get_supported_data_types():
-                raise Exception(f"{table_name} table {attr_name} attribute type {type} is not supported yet :-() use {Config.get_supported_data_types()}")
-
-            if type != "NULL" and "data" not in attribute:
+            if "data" not in attribute:
                 raise Exception(f"{table_name} table {attr_name} {attribute['type']} attribute do not have a data node")
         
         util.log(f"config file is validated")

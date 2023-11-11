@@ -12,38 +12,27 @@ dynamodb_table:
   row_count: 10
   attributes:
     - name: id
-      type: "N"
       data: row_id
     - name: first_name
-      type: S
       data: fake.first_name()
     - name: last_name
-      type: S
       data: fake.last_name()
     - name: age
-      type: "N"
       data: fake.random_int(18, 90)
     - name: dob
-      type: S
       data: fake.date_of_birth()
     - name: street_address
-      type: S
       data: fake.street_address()
     - name: city
-      type: S
       data: fake.city()
     - name: state_abbr
-      type: S
       data: fake.state_abbr()
     - name: postcode
-      type: S
       data: fake.postcode()
     - name: gender
-      type: S
       data: random.choice(["male", "female"])
       null_percentage: 0.3
     - name: left_handed
-      type: BOOL
       data: fake.pybool()
     - name: height
-      type: "NULL"
+      data: None
