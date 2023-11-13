@@ -32,7 +32,7 @@ def main():
 
     if isinstance(config_file_path, str) and target_system == "file":
         dynamodbfaker.to_target("json", config_file_path, target_file_path)
-    if isinstance(config_file_path, str) and target_system == "dynamodb":
+    elif isinstance(config_file_path, str) and target_system == "dynamodb":
         dynamodbfaker.to_dynamodb(config_file_path, target_file_path)
     else:
         print("Wrong paramater(s)")

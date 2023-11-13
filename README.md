@@ -14,63 +14,63 @@ Insert generated data directly to your dynamodb table.
 pip install dynamodbfaker
 ```
 
+### AWS Credentials
+dynamodbfaker uses your local Aws Credentials to access Aws. You need to setup them also to access Aws. \
+Aws credentials are basicaly a config file under ~/.aws/credentials which contains your access key, secret key and/or tokens. \
+Here is how you can setup \
+Youtube : https://www.youtube.com/watch?v=qmtDRmplMG4 \
+Aws Doc : https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html 
+
 ### Sample Yaml File
 ```
 version: 1
 config:
-  locale: en_US                       #faker locale Default:en_US
-  on_update_item_error: RAISE_ERROR   #RAISE_ERROR, SKIP Default:RAISE_ERROR
-  if_item_exists: OVERWRITE           #OVERWRITE, SKIP Default:OVERWRITE
-  empty_table_first: False            #True/False Default:False
+  locale: en_US                       #OPTIONAL faker locale Default:en_US
+  on_update_item_error: RAISE_ERROR   #OPTIONAL RAISE_ERROR, SKIP Default:RAISE_ERROR
 aws:
-  region: us-east-1
-  credentials_profile: default        #the profile name in your local .aws/config file Default:default
+  region: us-east-1                   #OPTIONAL Default:the region of the current session
+  credentials_profile: default        #OPTIONAL the profile name in your local .aws/config file Default:default
 dynamodb_table:
-  table_name: person
-  row_count: 10000
+  table_name: person                  # MANDATORY
+  row_count: 10000                    #OPTIONAL Default 10
   attributes:
-    - name: id
-      type: "N"
-      data: row_id
+    - name: id                        #MANDATORY
+      data: row_id                    #OPTIONAL Default fake.word()
     - name: first_name
-      type: S
       data: fake.first_name()
     - name: last_name
-      type: S
       data: fake.last_name()
     - name: age
-      type: "N"
       data: fake.random_int(18, 90)
     - name: dob
-      type: S
       data: fake.date_of_birth()
     - name: street_address
-      type: S
       data: fake.street_address()
     - name: city
-      type: S
       data: fake.city()
     - name: state_abbr
-      type: S
       data: fake.state_abbr()
     - name: postcode
-      type: S
       data: fake.postcode()
     - name: gender
-      type: S
       data: random.choice(["male", "female"])
       null_percentage: 0.3
     - name: left_handed
-      type: BOOL
       data: fake.pybool()
     - name: height
-      type: "NULL"
+      data: None
 ```
 [full yml example](tests/test_table.yaml)
 
 ### Sample Code
 ```python
 import dynamodbfaker
+
+# insert fake data to your dynamodb table
+dynamodbfaker.to_dynamodb("test_table.yaml")
+
+# insert fake data to your dynamodb table and export to target folder in json format
+dynamodbfaker.to_dynamodb("test_table.yaml", "./target_folder")
 
 # export in json format
 dynamodbfaker.to_json("test_table.yaml", "./target_folder")
@@ -86,6 +86,12 @@ dynamodbfaker.to_json("test_table.yaml", "./target_folder", fake_provider=School
 You can use dynamodbfaker in your terminal for adhoc needs or shell script to automate fake data generation. \
 Faker custom providers and custom functions are not supported in CLI.
 ```bash
+# insert fake data to your dynamodb table
+dynamodbfaker --config test_table.yaml --to dynamodb
+
+# insert fake data to your dynamodb table and export to target_folder in json format
+dynamodbfaker --config test_table.yaml --to dynamodb --target ./target_folder 
+
 # exports to current folder in json format
 dynamodbfaker --config test_table.yaml
 
@@ -210,16 +216,12 @@ dynamodb_table:
   row_count: 10000
   attributes:
     - name: id
-      type: "N"
       data: row_id
     - name: first_name
-      type: S
       data: fake.first_name()
     - name: last_name
-      type: S
       data: fake.last_name()
     - name: age
-      type: "N"
       data: fake.random_int(18, 90)
     - column_name: level
       data: get_level() # custom function
@@ -233,9 +235,8 @@ https://faker.readthedocs.io/en/master/providers.html#
 https://github.com/necatiarslan/dynamodb-faker/issues/new 
 
 
-### TODO
-- Save to dynamodb
-
+### Todo
+- 
 
 ### Nice To Have
 - 
