@@ -5,8 +5,9 @@ from . import aws
 
 class Config:
     _instance = None
+    file_path:str
 
-    def __new__(cls, file_path):
+    def __new__(cls, file_path:str):
             if cls._instance is None:
                 cls._instance = super(Config, cls).__new__(cls)
                 if not path.isabs(file_path):
@@ -19,6 +20,13 @@ class Config:
 
             return cls._instance
     
+    @staticmethod
+    def get_current():
+        if Config._instance is None:
+            raise Exception(f"Config is not initialized yet")
+        
+        return Config._instance
+
     def load_config_file(self):
         if path.isfile(self.file_path):
             with open(self.file_path, "r") as file:
@@ -56,7 +64,7 @@ class Config:
         
         util.log(f"config file is validated")
 
-    def get_supported_data_types():
+    def get_supported_data_types(self):
         return ["S", "N", "BOOL", "NULL"]
 
     def get_locale(self):
@@ -75,7 +83,7 @@ class Config:
         if "aws" in self.config and "region" in self.config["aws"]:
             return self.config["aws"]["region"]
         else:
-            return aws.get_current_region()
+            return None
 
     def get_profile(self):
         if "aws" in self.config and "profile" in self.config["aws"]:

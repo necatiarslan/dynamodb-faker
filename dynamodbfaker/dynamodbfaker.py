@@ -39,7 +39,7 @@ def to_dynamodb(config_file_path, target_file_path=None, **kwargs):
     item_list = get_item_list(config_file_path, **kwargs)
     table_name = configurator.get_table()
     region = configurator.get_region()
-    dynamodb_client = dynamodb.get_dynamodb_client(region)
+    dynamodb_client = dynamodb.get_dynamodb_client()
     on_item_insert_error = configurator.get_on_item_insert_error()
 
     iteration = 1
@@ -47,7 +47,7 @@ def to_dynamodb(config_file_path, target_file_path=None, **kwargs):
     for item in item_list:
         util.progress_bar(iteration, len(item_list), "Inserting Dynamodb")
         try:
-            dynamodb.put_item(table_name, item, region_name=None, dynamodb_client=dynamodb_client)
+            dynamodb.put_item(table_name, item, dynamodb_client=dynamodb_client)
             items_inserted += 1
         except Exception as e:
             if on_item_insert_error == "RAISE_ERROR":
@@ -68,7 +68,7 @@ def to_dynamodb(config_file_path, target_file_path=None, **kwargs):
         util.log(f"data is exported to {target_file_path} as {file_type}")
 
 
-def get_item_list(config_file_path:str, **kwargs) -> []:
+def get_item_list(config_file_path:str, **kwargs):
     configurator = config.Config(config_file_path)
 
     locale = None
@@ -135,7 +135,7 @@ def get_attribute_type_value(data, table_name, attr_name):
     else:
         raise Exception(f"Attribute type can not be infered {table_name}/{attr_name}")
 
-def generate_fake_value_list(fake: Faker, command, row_count, attribute_config, **kwargs) -> []:
+def generate_fake_value_list(fake: Faker, command, row_count, attribute_config, **kwargs):
     result = None
     
     null_percentge = 0
