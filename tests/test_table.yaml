@@ -1,9 +1,7 @@
 version: 1
 config:
   locale: en_US #faker locale Default:en_US
-  on_update_item_error: RAISE_ERROR #RAISE_ERROR, SKIP Default:RAISE_ERROR
-  if_item_exists: OVERWRITE #OVERWRITE, SKIP Default:OVERWRITE
-  empty_table_first: False #True/False Default:False
+  on_item_insert_error: RAISE_ERROR #RAISE_ERROR, SKIP Default:RAISE_ERROR
 aws:
   region: us-east-1
   credentials_profile: default #the profile name in your local .aws/config file Default:default
@@ -36,3 +34,4 @@ dynamodb_table:
       data: fake.pybool()
     - name: height
       data: None
+    - name: no_data_attr
