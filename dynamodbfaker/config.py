@@ -4,14 +4,20 @@ from . import util
 from . import aws
 
 class Config:
-    def __init__(self, file_path):
-        if not path.isabs(file_path):
-            file_path = path.abspath(file_path)
+    _instance = None
 
-        util.log(f"received config is {file_path}")
-        self.file_path = file_path
-        self.load_config_file()
-        self.validate_config()
+    def __new__(cls, file_path):
+            if cls._instance is None:
+                cls._instance = super(Config, cls).__new__(cls)
+                if not path.isabs(file_path):
+                    file_path = path.abspath(file_path)
+
+                util.log(f"received config is {file_path}")
+                cls._instance.file_path = file_path
+                cls._instance.load_config_file()
+                cls._instance.validate_config()
+
+            return cls._instance
     
     def load_config_file(self):
         if path.isfile(self.file_path):
