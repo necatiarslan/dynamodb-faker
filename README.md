@@ -236,7 +236,9 @@ https://github.com/necatiarslan/dynamodb-faker/issues/new
 
 
 ### Todo
-- 
+- Support for Set (NS/SS/BS), List (L), Map (M) types
+- Better Date types Epoch / ISO-8601 Format
+- Updating current items
 
 ### Nice To Have
 - 
