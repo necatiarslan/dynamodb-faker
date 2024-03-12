@@ -2,12 +2,14 @@ version: 1
 config:
   locale: en_US #faker locale Default:en_US
   on_item_insert_error: RAISE_ERROR #RAISE_ERROR, SKIP Default:RAISE_ERROR
+  python_import:
+    - datetime
 aws:
   region: us-east-1
   credentials_profile: default #the profile name in your local .aws/config file Default:default
 dynamodb_table:
   table_name: person
-  row_count: 10
+  row_count: 1
   attributes:
     - name: id
       data: row_id
@@ -35,3 +37,5 @@ dynamodb_table:
     - name: height
       data: None
     - name: no_data_attr
+    - name: epoch_timestamp
+      data: int(datetime.datetime.combine(fake.date_this_month(), datetime.time(0,0,0)).timestamp())

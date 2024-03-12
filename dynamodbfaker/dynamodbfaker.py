@@ -1,3 +1,4 @@
+from distutils.log import Log
 from faker import Faker
 import random
 import json
@@ -67,7 +68,6 @@ def to_dynamodb(config_file_path, target_file_path=None, **kwargs):
         call_export_function(json_data, target_file_path)
         util.log(f"data is exported to {target_file_path} as {file_type}")
 
-
 def get_item_list(config_file_path:str, **kwargs):
     configurator = config.Config(config_file_path)
 
@@ -87,6 +87,7 @@ def get_item_list(config_file_path:str, **kwargs):
     table_name = configurator.get_table()
     row_count = configurator.get_rowcount()
     attribute_list = configurator.get_attributes()
+    python_import = configurator.get_python_import()
 
     json_data = {}
     iteration = 1
@@ -99,7 +100,7 @@ def get_item_list(config_file_path:str, **kwargs):
 
         util.progress_bar(iteration, len(attribute_list), f"Generating {attr_name}")
 
-        fake_data = generate_fake_value_list(faker, data_command, row_count, attr, **kwargs)
+        fake_data = generate_fake_value_list(faker, data_command, row_count, attr, python_import, **kwargs)
         json_data[attr_name] = fake_data
 
         iteration += 1
@@ -135,9 +136,11 @@ def get_attribute_type_value(data, table_name, attr_name):
     else:
         raise Exception(f"Attribute type can not be infered {table_name}/{attr_name}")
 
-def generate_fake_value_list(fake: Faker, command, row_count, attribute_config, **kwargs):
+def generate_fake_value_list(fake: Faker, command, row_count, attribute_config, python_import = None, **kwargs):
     result = None
     
+    attribute_name = attribute_config["name"]
+
     null_percentge = 0
     null_indexies = []
     if "null_percentage" in attribute_config:
@@ -169,8 +172,16 @@ def generate_fake_value_list(fake: Faker, command, row_count, attribute_config, 
                 func = kwargs["custom_function"]
                 variables[func.__name__] = func
         
-        exec(f"result = {command}", variables)
-        result = variables["result"]
+        if python_import and isinstance(python_import, list):
+            for library_name in python_import:
+                variables[library_name] = __import__(library_name)
+
+        try:
+            exec(f"result = {command}", variables)
+            result = variables["result"]
+        except Exception as e:
+            util.log(f"Data Generation Error Name:{attribute_name} Command: {command}")
+            raise e
 
         if isinstance(result, (datetime.date, datetime.datetime)):
             result = result.isoformat()

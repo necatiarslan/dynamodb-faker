@@ -102,3 +102,9 @@ class Config:
     
     def get_attributes(self):
         return self.config["dynamodb_table"]["attributes"]
+
+    def get_python_import(self):
+        if "config" in self.config and "python_import" in self.config["config"]:
+            return self.config["config"]["python_import"]
+
+        return []

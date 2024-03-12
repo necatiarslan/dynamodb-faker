@@ -27,6 +27,8 @@ version: 1
 config:
   locale: en_US                       #OPTIONAL faker locale Default:en_US
   on_update_item_error: RAISE_ERROR   #OPTIONAL RAISE_ERROR, SKIP Default:RAISE_ERROR
+  python_import:
+    - datetime
 aws:
   region: us-east-1                   #OPTIONAL Default:the region of the current session
   credentials_profile: default        #OPTIONAL the profile name in your local .aws/config file Default:default
@@ -237,7 +239,6 @@ https://github.com/necatiarslan/dynamodb-faker/issues/new
 
 ### Todo
 - Support for Set (NS/SS/BS), List (L), Map (M) types
-- Better Date types Epoch / ISO-8601 Format
 - Updating current items
 
 ### Nice To Have
