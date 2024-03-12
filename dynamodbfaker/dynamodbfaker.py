@@ -3,7 +3,7 @@ from faker import Faker
 import random
 import json
 from os import path
-import datetime
+import datetime, time
 from . import config, util, dynamodb
 
 def to_target(file_type, config_file_path, target_file_path, **kwargs) -> str :
@@ -39,6 +39,8 @@ def to_dynamodb(config_file_path, target_file_path=None, **kwargs):
     configurator = config.Config(config_file_path)
     item_list = get_item_list(config_file_path, **kwargs)
     table_name = configurator.get_table()
+    batch = configurator.get_batch()
+    sleep = configurator.get_sleep()
     region = configurator.get_region()
     dynamodb_client = dynamodb.get_dynamodb_client()
     on_item_insert_error = configurator.get_on_item_insert_error()
@@ -50,6 +52,8 @@ def to_dynamodb(config_file_path, target_file_path=None, **kwargs):
         try:
             dynamodb.put_item(table_name, item, dynamodb_client=dynamodb_client)
             items_inserted += 1
+            if sleep > 0 and items_inserted % batch == 0:
+                time.sleep(sleep / 1000)
         except Exception as e:
             if on_item_insert_error == "RAISE_ERROR":
                 raise Exception(f"Dynamodb Table {table_name} put_item error !!!\n{item}\n{e}")
@@ -100,7 +104,7 @@ def get_item_list(config_file_path:str, **kwargs):
 
         util.progress_bar(iteration, len(attribute_list), f"Generating {attr_name}")
 
-        fake_data = generate_fake_value_list(faker, data_command, row_count, attr, python_import, **kwargs)
+        fake_data = generate_fake_value_list(faker, data_command, row_count, attr, python_import, json_data, **kwargs)
         json_data[attr_name] = fake_data
 
         iteration += 1
@@ -136,7 +140,7 @@ def get_attribute_type_value(data, table_name, attr_name):
     else:
         raise Exception(f"Attribute type can not be infered {table_name}/{attr_name}")
 
-def generate_fake_value_list(fake: Faker, command, row_count, attribute_config, python_import = None, **kwargs):
+def generate_fake_value_list(fake: Faker, command, row_count, attribute_config, python_import, json_data, **kwargs):
     result = None
     
     attribute_name = attribute_config["name"]
@@ -175,6 +179,9 @@ def generate_fake_value_list(fake: Faker, command, row_count, attribute_config, 
         if python_import and isinstance(python_import, list):
             for library_name in python_import:
                 variables[library_name] = __import__(library_name)
+
+        for key in json_data:
+            variables[key] = json_data[key][row_id-1]
 
         try:
             exec(f"result = {command}", variables)

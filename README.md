@@ -35,6 +35,8 @@ aws:
 dynamodb_table:
   table_name: person                  # MANDATORY
   row_count: 10000                    #OPTIONAL Default 10
+  batch: 10                           #OPTIONAL Batch size when inserting dynamodb
+  sleep: 1000                         #OPTIONAL Sleep time between inserts to dynamodb
   attributes:
     - name: id                        #MANDATORY
       data: row_id                    #OPTIONAL Default fake.word()
@@ -42,6 +44,8 @@ dynamodb_table:
       data: fake.first_name()
     - name: last_name
       data: fake.last_name()
+    - name: full_name
+      data: first_name + " " + last_name
     - name: age
       data: fake.random_int(18, 90)
     - name: dob
@@ -117,6 +121,9 @@ dynamodbfaker --config test_table.yaml --target ./target_folder/target_file.json
             },
             "last_name": {
                 "S": "Skinner"
+            },
+            "full_name": {
+                "S": "Connie Skinner"
             },
             "age": {
                 "N": 89

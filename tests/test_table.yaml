@@ -9,7 +9,9 @@ aws:
   credentials_profile: default #the profile name in your local .aws/config file Default:default
 dynamodb_table:
   table_name: person
-  row_count: 1
+  row_count: 500
+  batch: 10
+  sleep: 1000
   attributes:
     - name: id
       data: row_id
@@ -17,6 +19,8 @@ dynamodb_table:
       data: fake.first_name()
     - name: last_name
       data: fake.last_name()
+    - name: full_name
+      data: first_name + " " + last_name
     - name: age
       data: fake.random_int(18, 90)
     - name: dob

@@ -12,5 +12,5 @@ def get_level():
 directory_path = 'tests/exports'
 [os.remove(os.path.join(directory_path, file)) for file in os.listdir(directory_path) if os.path.isfile(os.path.join(directory_path, file))]
 
-dynamodbfaker.to_json("tests/test_table.yaml", "./tests/exports", fake_provider=SchoolProvider, custom_function=get_level)
-#dynamodbfaker.to_dynamodb("tests/test_table.yaml", "./tests/exports")
+#dynamodbfaker.to_json("tests/test_table.yaml", "./tests/exports", fake_provider=SchoolProvider, custom_function=get_level)
+dynamodbfaker.to_dynamodb("tests/test_table.yaml")

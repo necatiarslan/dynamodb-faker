@@ -94,6 +94,16 @@ class Config:
     def get_table(self):
         return self.config["dynamodb_table"]["table_name"]
 
+    def get_batch(self):
+        if "dynamodb_table" in self.config and "batch" in self.config["dynamodb_table"]:
+            return self.config["dynamodb_table"]["batch"]
+        return 1
+    
+    def get_sleep(self):
+        if "dynamodb_table" in self.config and "sleep" in self.config["dynamodb_table"]:
+            return self.config["dynamodb_table"]["sleep"]
+        return 0
+    
     def get_rowcount(self):
         if "dynamodb_table" in self.config and "row_count" in self.config["dynamodb_table"]:
             return self.config["dynamodb_table"]["row_count"]
