@@ -76,7 +76,7 @@ build:
     python setup.py sdist bdist_wheel
 
 publish:
-	twine upload dist/1.0.2/*
+	twine upload dist/1.0.3/*
 # Set your username to __token__
 # Set your password to the token value, including the pypi- prefix
 

@@ -45,7 +45,7 @@ dynamodb_table:
     - name: last_name
       data: fake.last_name()
     - name: full_name
-      data: first_name + " " + last_name
+      data: first_name + " " + last_name   # You can use previous attributes
     - name: age
       data: fake.random_int(18, 90)
     - name: dob
@@ -247,6 +247,7 @@ https://github.com/necatiarslan/dynamodb-faker/issues/new
 ### Todo
 - Support for Set (NS/SS/BS), List (L), Map (M) types
 - Updating current items
+- Global Variables, Row Variables
 
 ### Nice To Have
 - 
