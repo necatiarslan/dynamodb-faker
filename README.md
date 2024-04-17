@@ -246,7 +246,7 @@ https://github.com/necatiarslan/dynamodb-faker/issues/new
 
 ### Todo
 - Support for Set (NS/SS/BS), List (L), Map (M) types
-- Updating current items
+- Updating current items (UpdateItem Method support)
 - Global Variables, Row Variables
 
 ### Nice To Have
