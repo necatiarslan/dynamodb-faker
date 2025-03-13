@@ -1,4 +1,3 @@
-from distutils.log import Log
 from faker import Faker
 import random
 import json
@@ -102,7 +101,7 @@ def get_item_list(config_file_path:str, **kwargs):
         else:
             data_command = "fake.word()"
 
-        util.progress_bar(iteration, len(attribute_list), f"Generating {attr_name}")
+        util.progress_bar(iteration, len(attribute_list), attr_name)
 
         fake_data = generate_fake_value_list(faker, data_command, row_count, attr, python_import, json_data, **kwargs)
         json_data[attr_name] = fake_data

@@ -46,8 +46,8 @@ pyenv-uninstall *args='':
     pyenv uninstall -v $@
 
 #provide python version
-pyenv-virtualenv-create *args='':
-    pyenv virtualenv $@ $(basename $(pwd))
+pyenv-virtualenv-create:
+    pyenv virtualenv 3.13.0 $(basename $(pwd))
     pyenv activate $(basename $(pwd))
     pyenv local $(basename $(pwd))
 
@@ -76,7 +76,7 @@ build:
     python setup.py sdist bdist_wheel
 
 publish:
-	twine upload dist/1.0.3/*
+	twine upload dist/1.1.0/*
 # Set your username to __token__
 # Set your password to the token value, including the pypi- prefix
 

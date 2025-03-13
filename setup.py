@@ -5,7 +5,7 @@ with open("README.md") as file:
 
 setup(
     name='dynamodbfaker',
-    version='1.0.3',
+    version='1.1.0',
     description='A Python package to generate and insert fake data for AWS Dynamodb',
     long_description = description,
     long_description_content_type = "text/markdown",
